@@ -111,29 +111,33 @@ export async function handleForgotPassword(req, res) {
 export async function handleResetPassword(req, res) {
     try {
         const token = req.query.token
-        const { newPassword } = req.body
-
-        if (!token || !newPassword)
+        const { password } = req.body
+        
+        if (!token || !password){
             return sendError(res, 400, "Token and new password are required")
+        }
+        
 
-        if (newPassword.length < 6)
+        if (password.length < 6)
             return sendError(res, 400, "Password must be at least 6 characters")
 
         const hashedToken = crypto.createHash("sha256").update(token).digest("hex")
 
+        
         const user = await User.findOne({
             resetPasswordToken: hashedToken,
             resetPasswordExpiry: { $gt: Date.now() }
         })
+        
 
         if (!user)
             return sendError(res, 400, "Invalid or expired token")
 
-        const isSamePassword = await bcrypt.compare(newPassword, user.password)
+        const isSamePassword = await bcrypt.compare(password, user.password)
         if (isSamePassword)
             return sendError(res, 400, "New password cannot be same as old password")
 
-        user.password = await bcrypt.hash(newPassword, 12)
+        user.password = await bcrypt.hash(password, 12)
         user.resetPasswordToken = undefined
         user.resetPasswordExpiry = undefined
         await user.save()

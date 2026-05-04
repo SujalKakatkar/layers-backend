@@ -27,7 +27,18 @@ const CanvasSchema = new Schema(
                 y: Number,
             }, { _id: false }),
         },
-        // 👇 add these
+        camera: {
+            zoom: {
+                type: Number,
+                default: 1
+            },
+            offsetX: {
+                type: Number
+            },
+            offsetY: {
+                type: Number
+            }
+        },
         shareToken: { type: String, default: null },
         shareTokenExpiry: { type: Date, default: null },
     },

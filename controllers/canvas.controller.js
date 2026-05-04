@@ -39,8 +39,11 @@ export async function handleUpdateCanvas(req, res) {
             manualConnectors,
             code,
             generatedGroupOffset,
-            layout
+            layout,
+            camera
         } = req.body
+
+        
 
         if (title !== undefined) canvas.title = title
         if (manualElements !== undefined) canvas.manualElements = manualElements
@@ -48,6 +51,7 @@ export async function handleUpdateCanvas(req, res) {
         if (code !== undefined) canvas.code = code
         if (generatedGroupOffset !== undefined) canvas.generatedGroupOffset = generatedGroupOffset
         if (layout !== undefined) canvas.layout = layout
+        if(camera !== undefined) canvas.camera = camera
 
         await canvas.save()
 
