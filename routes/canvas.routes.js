@@ -27,17 +27,16 @@ const canvasReadLimiter = rateLimit({
     message: { message: "Too many requests, please try again later" }
 })
 
+//public link of canvas
+router.get("/shared/:token", canvasReadLimiter, handleGetSharedCanvas)
+
 // all canvas routes are protected
 router.use(verifyToken) // ✅ applies to all routes below
 
-router.post("/", canvasWriteLimiter,checkCanvasLimit, handleCreateCanvas)
+router.post("/", canvasWriteLimiter, checkCanvasLimit, handleCreateCanvas)
 router.put("/:id", canvasWriteLimiter, handleUpdateCanvas)
 router.get("/:id", canvasReadLimiter, handleGetCanvas)
 router.get("/", canvasReadLimiter, handleGetAllCanvases)
-
-//share link relate routes
-router.get("/shared/:token", canvasReadLimiter, handleGetSharedCanvas) 
-router.get("/:id", canvasReadLimiter, handleGetCanvas)
 router.post("/:id/share", canvasWriteLimiter, handleGenerateShareLink)
 router.delete("/:id/share", canvasWriteLimiter, handleRevokeShareLink)
 

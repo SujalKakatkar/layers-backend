@@ -44,6 +44,7 @@ export async function handleUpdateCanvas(req, res) {
         } = req.body
 
         
+        
 
         if (title !== undefined) canvas.title = title
         if (manualElements !== undefined) canvas.manualElements = manualElements
@@ -52,6 +53,7 @@ export async function handleUpdateCanvas(req, res) {
         if (generatedGroupOffset !== undefined) canvas.generatedGroupOffset = generatedGroupOffset
         if (layout !== undefined) canvas.layout = layout
         if(camera !== undefined) canvas.camera = camera
+
 
         await canvas.save()
 
@@ -151,6 +153,8 @@ export async function handleGetSharedCanvas(req, res) {
 
         if (!canvas)
             return sendError(res, 404, "Share link is invalid or has expired")
+        console.log(canvas);
+        
 
         // return canvas without sensitive fields
         const canvasData = {

@@ -1,6 +1,8 @@
 import mongoose, { Schema } from "mongoose";
 import { ConnectorSchema, ShapeSchema } from "./shape.model.js";
 
+//todo: split the manualElements and manualConnectors into different collections in MongoDB
+
 const CanvasSchema = new Schema(
     {
         title: String,
@@ -27,18 +29,15 @@ const CanvasSchema = new Schema(
                 y: Number,
             }, { _id: false }),
         },
+        // Example MongoDB Schema update
         camera: {
-            zoom: {
-                type: Number,
-                default: 1
-            },
-            offsetX: {
-                type: Number
-            },
-            offsetY: {
-                type: Number
+            scale: { type: Number, default: 1 },
+            offset: {
+                x: { type: Number, default: 0 },
+                y: { type: Number, default: 0 }
             }
         },
+
         shareToken: { type: String, default: null },
         shareTokenExpiry: { type: Date, default: null },
     },
