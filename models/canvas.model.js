@@ -1,7 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 import { ConnectorSchema, ShapeSchema } from "./shape.model.js";
 
-//todo: split the manualElements and manualConnectors into different collections in MongoDB
 
 const CanvasSchema = new Schema(
     {

@@ -64,6 +64,28 @@ export async function handleUpdateCanvas(req, res) {
     }
 }
 
+// canvas.controller.js
+export async function handleDeleteCanvas(req, res) {
+    try {
+        const userId = req.user.userId
+        const { id } = req.params
+
+        const canvas = await Canvas.findById(id)
+
+        if (!canvas)
+            return sendError(res, 404, "Canvas not found")
+
+        if (canvas.userId.toString() !== userId)
+            return sendError(res, 403, "You are not allowed to delete this canvas")
+
+        await Canvas.findByIdAndDelete(id)
+
+        return sendResponse(res, 200, null, "Canvas deleted successfully")
+
+    } catch (error) {
+        return sendError(res, 500, "Something went wrong")
+    }
+}
 
 export async function handleGetCanvas(req, res) {
     try {

@@ -7,7 +7,8 @@ import {
     handleGetAllCanvases,
     handleGetSharedCanvas,
     handleGenerateShareLink,
-    handleRevokeShareLink
+    handleRevokeShareLink,
+    handleDeleteCanvas
 } from "../controllers/canvas.controller.js"
 import { verifyToken } from "../middlewares/auth.middleware.js"
 import { checkCanvasLimit } from "../middlewares/checkLimit.middleware.js"
@@ -36,6 +37,7 @@ router.use(verifyToken) // ✅ applies to all routes below
 router.post("/", canvasWriteLimiter, checkCanvasLimit, handleCreateCanvas)
 router.put("/:id", canvasWriteLimiter, handleUpdateCanvas)
 router.get("/:id", canvasReadLimiter, handleGetCanvas)
+router.delete("/:id", canvasWriteLimiter, handleDeleteCanvas)
 router.get("/", canvasReadLimiter, handleGetAllCanvases)
 router.post("/:id/share", canvasWriteLimiter, handleGenerateShareLink)
 router.delete("/:id/share", canvasWriteLimiter, handleRevokeShareLink)
