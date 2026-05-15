@@ -1,12 +1,19 @@
-import mongoose from "mongoose"
-import { User } from "../models/user.model.js"
-import { generateTokens } from "../utils/generateTokens.js"
 import { sendResponse, sendError } from "../utils/apiHandler.js"
-import jwt from 'jsonwebtoken'
-import bcrypt from 'bcrypt'
-import crypto from 'crypto'
-import { sendResetEmail } from "../utils/sendResetEmail.js"
+import {
+    signInService,
+    signUpService,
+    forgotPasswordService,
+    resetPasswordService,
+    logOutService,
+    refreshTokenService,
+    getMeService
+} from "../services/auth.service.js"
 
+const cookieOptions = {
+    httpOnly: true,
+    secure: false,
+    sameSite: "lax"
+}
 
 export async function handleSignIn(req, res) {
     try {
@@ -15,31 +22,15 @@ export async function handleSignIn(req, res) {
         if (!email || !password)
             return sendError(res, 400, "All fields are required")
 
-        const user = await User.findOne({ email })
-        const isPasswordCorrect = user && await bcrypt.compare(password, user.password)
+        const { userData, accessToken, refreshToken } = await signInService({ email, password })
 
-        if (!user || !isPasswordCorrect)
-            return sendError(res, 401, "Invalid email or password")
-
-        const { accessToken, refreshToken } = generateTokens(user._id)
-        user.refreshToken = refreshToken
-        await user.save()
-
-        const options = { httpOnly: true, secure: false, sameSite: "lax" }
-
-        res.cookie("accessToken", accessToken, options)
-            .cookie("refreshToken", refreshToken, options)
-
-        const userData = {
-            _id: user._id,
-            fullName: user.fullName,
-            email: user.email
-
-        }
+        res.cookie("accessToken", accessToken, cookieOptions)
+            .cookie("refreshToken", refreshToken, cookieOptions)
 
         return sendResponse(res, 200, userData, "User logged in successfully")
 
     } catch (error) {
+        if (error.status) return sendError(res, error.status, error.message)
         return sendError(res, 500, "Something went wrong")
     }
 }
@@ -51,31 +42,15 @@ export async function handleSignUp(req, res) {
         if (!fullName || !email || !password)
             return sendError(res, 400, "All fields are required")
 
-        const existingUser = await User.findOne({ email })
-        if (existingUser)
-            return sendError(res, 409, "Email already exists")
+        const { userData, accessToken, refreshToken } = await signUpService({ fullName, email, password })
 
-        const hashedPassword = await bcrypt.hash(password, 10)
-        const user = await User.create({ fullName, email, password: hashedPassword })
+        res.cookie("accessToken", accessToken, cookieOptions)
+            .cookie("refreshToken", refreshToken, cookieOptions)
 
-        const { accessToken, refreshToken } = generateTokens(user._id)
-        user.refreshToken = refreshToken
-        await user.save()
-
-        const options = { httpOnly: true, secure: false, sameSite: "lax" }
-
-        res.cookie("accessToken", accessToken, options)
-            .cookie("refreshToken", refreshToken, options)
-
-        const userData = {
-            _id: user._id,
-            fullName: user.fullName,
-            email: user.email
-
-        }
         return sendResponse(res, 201, userData, "User created successfully")
 
     } catch (error) {
+        if (error.status) return sendError(res, error.status, error.message)
         return sendError(res, 500, "Something went wrong")
     }
 }
@@ -87,23 +62,12 @@ export async function handleForgotPassword(req, res) {
         if (!email)
             return sendError(res, 400, "Email is required")
 
-        const user = await User.findOne({ email })
-        if (!user)
-            return sendResponse(res, 200, null, "If this email exists, a reset link has been sent")
-
-        const token = crypto.randomBytes(32).toString("hex")
-        const hashedToken = crypto.createHash("sha256").update(token).digest("hex")
-
-        user.resetPasswordToken = hashedToken
-        user.resetPasswordExpiry = Date.now() + 15 * 60 * 1000
-        await user.save()
-
-        const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${token}`
-        await sendResetEmail(user.email, resetUrl)
+        await forgotPasswordService({ email })
 
         return sendResponse(res, 200, null, "If this email exists, a reset link has been sent")
 
     } catch (error) {
+        if (error.status) return sendError(res, error.status, error.message)
         return sendError(res, 500, "Something went wrong")
     }
 }
@@ -112,39 +76,19 @@ export async function handleResetPassword(req, res) {
     try {
         const token = req.query.token
         const { password } = req.body
-        
-        if (!token || !password){
+
+        if (!token || !password)
             return sendError(res, 400, "Token and new password are required")
-        }
-        
 
         if (password.length < 6)
             return sendError(res, 400, "Password must be at least 6 characters")
 
-        const hashedToken = crypto.createHash("sha256").update(token).digest("hex")
-
-        
-        const user = await User.findOne({
-            resetPasswordToken: hashedToken,
-            resetPasswordExpiry: { $gt: Date.now() }
-        })
-        
-
-        if (!user)
-            return sendError(res, 400, "Invalid or expired token")
-
-        const isSamePassword = await bcrypt.compare(password, user.password)
-        if (isSamePassword)
-            return sendError(res, 400, "New password cannot be same as old password")
-
-        user.password = await bcrypt.hash(password, 12)
-        user.resetPasswordToken = undefined
-        user.resetPasswordExpiry = undefined
-        await user.save()
+        await resetPasswordService({ token, password })
 
         return sendResponse(res, 200, null, "Password updated successfully")
 
     } catch (error) {
+        if (error.status) return sendError(res, error.status, error.message)
         return sendError(res, 500, "Something went wrong")
     }
 }
@@ -154,25 +98,18 @@ export async function handleLogOut(req, res) {
 
     if (!token) return res.sendStatus(204)
 
-    let payload;
     try {
-        payload = jwt.verify(token, process.env.REFRESH_SECRET)
+        await logOutService({ token })
     } catch (err) {
+        // clear cookies regardless of error reason
         res.clearCookie("accessToken")
         res.clearCookie("refreshToken")
-        return res.sendStatus(204)
+
+        if (err.message === "invalid_token") return res.sendStatus(204)
+        if (err.message === "user_not_found") return res.sendStatus(204)
+        if (err.message === "token_mismatch")
+            return sendError(res, 401, "Invalid refresh token")
     }
-
-    const user = await User.findById(payload.userId)
-    if (!user) return res.sendStatus(204)
-
-    if (user.refreshToken !== token) {
-        res.clearCookie("accessToken")
-        res.clearCookie("refreshToken")
-        return sendError(res, 401, "Invalid refresh token")
-    }
-
-    await User.updateOne({ _id: payload.userId }, { $unset: { refreshToken: "" } })
 
     res.clearCookie("accessToken")
     res.clearCookie("refreshToken")
@@ -180,56 +117,35 @@ export async function handleLogOut(req, res) {
     return sendResponse(res, 200, null, "User logged out successfully")
 }
 
-export async function handleGetMe(req, res) {
-    try {
-
-        const user = await User.findById(req.user.userId)
-            .select("-password -refreshToken")
-
-        if (!user) return sendError(res, 404, "User not found")
-
-        return sendResponse(res, 200, user, "User fetched successfully")
-
-    } catch (error) {
-        return sendError(res, 500, "Something went wrong")
-    }
-}
-
-
 export async function handleRefreshToken(req, res) {
     const token = req.cookies.refreshToken
 
     if (!token)
         return sendError(res, 401, "No refresh token provided")
 
-    let payload;
     try {
-        payload = jwt.verify(token, process.env.REFRESH_SECRET)
-    } catch (err) {
+        const { accessToken, refreshToken } = await refreshTokenService({ token })
+
+        res.cookie("accessToken", accessToken, cookieOptions)
+            .cookie("refreshToken", refreshToken, cookieOptions)
+
+        return sendResponse(res, 200, null, "Access token refreshed successfully")
+
+    } catch (error) {
         res.clearCookie("accessToken")
         res.clearCookie("refreshToken")
-        return sendError(res, 401, "Invalid or expired refresh token")
+        if (error.status) return sendError(res, error.status, error.message)
+        return sendError(res, 500, "Something went wrong")
     }
+}
 
-    const user = await User.findById(payload.userId)
-    if (!user)
-        return sendError(res, 401, "User not found")
+export async function handleGetMe(req, res) {
+    try {
+        const user = await getMeService({ userId: req.user.userId })
+        return sendResponse(res, 200, user, "User fetched successfully")
 
-    if (user.refreshToken !== token) {
-        res.clearCookie("accessToken")
-        res.clearCookie("refreshToken")
-        return sendError(res, 401, "Refresh token mismatch")
+    } catch (error) {
+        if (error.status) return sendError(res, error.status, error.message)
+        return sendError(res, 500, "Something went wrong")
     }
-
-    const { accessToken, refreshToken } = generateTokens(user._id)
-
-    user.refreshToken = refreshToken
-    await user.save()
-
-    const options = { httpOnly: true, secure: false, sameSite: "lax" }
-
-    res.cookie("accessToken", accessToken, options)
-        .cookie("refreshToken", refreshToken, options)
-
-    return sendResponse(res, 200, null, "Access token refreshed successfully")
 }
