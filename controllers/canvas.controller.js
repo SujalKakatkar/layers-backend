@@ -1,14 +1,11 @@
 import { sendResponse, sendError } from "../utils/apiHandler.js"
-import {
-    createCanvasService,
-    updateCanvasService,
-    deleteCanvasService,
-    getCanvasService,
-    getAllCanvasesService,
-    generateShareLinkService,
-    getSharedCanvasService,
-    revokeShareLinkService
-} from "../services/canvas.service.js"
+import { createCanvasService } from "../services/canvas/createCanvas.service.js"
+import { updateCanvasService } from '../services/canvas/updateCanvas.service.js'
+import { getAllCanvasesService, getCanvasService } from "../services/canvas/getCanvases.service.js"
+import { deleteCanvasService } from '../services/canvas/deleteCanvas.service.js'
+import { generateShareLinkService, getSharedCanvasService, revokeShareLinkService } from "../services/canvas/shareCanvas.service.js"
+
+
 
 export async function handleCreateCanvas(req, res) {
     try {
@@ -25,12 +22,12 @@ export async function handleCreateCanvas(req, res) {
 
 export async function handleUpdateCanvas(req, res) {
     try {
-        const canvas = await updateCanvasService({
+        await updateCanvasService({
             userId: req.user.userId,
             id: req.params.id,
-            updates: req.body
+            payload: req.body
         })
-        return sendResponse(res, 200, canvas, "Canvas updated successfully")
+        return sendResponse(res, 200, "Canvas updated successfully")
     } catch (error) {
         if (error.status) return sendError(res, error.status, error.message)
         return sendError(res, 500, "Something went wrong")
@@ -52,6 +49,8 @@ export async function handleDeleteCanvas(req, res) {
 
 export async function handleGetCanvas(req, res) {
     try {
+        
+        
         const canvas = await getCanvasService({
             userId: req.user.userId,
             id: req.params.id

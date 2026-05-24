@@ -1,13 +1,12 @@
 import { sendResponse, sendError } from "../utils/apiHandler.js"
-import {
-    signInService,
-    signUpService,
-    forgotPasswordService,
-    resetPasswordService,
-    logOutService,
-    refreshTokenService,
-    getMeService
-} from "../services/auth.service.js"
+
+import { signInService } from "../services/auth/signIn.service.js"
+import { signUpService } from "../services/auth/signUp.service.js"
+import { forgotPasswordService } from "../services/auth/forgotPassword.service.js"
+import { resetPasswordService } from "../services/auth/resetPassword.service.js"
+import { signOutService } from "../services/auth/logOut.service.js"
+import { refreshTokenService } from "../services/auth/refreshToken.service.js"
+import { getMeService } from "../services/auth/getMe.service.js"
 
 const cookieOptions = {
     httpOnly: true,
@@ -99,7 +98,7 @@ export async function handleLogOut(req, res) {
     if (!token) return res.sendStatus(204)
 
     try {
-        await logOutService({ token })
+        await signOutService({ token })
     } catch (err) {
         // clear cookies regardless of error reason
         res.clearCookie("accessToken")

@@ -35,7 +35,7 @@ router.get("/shared/:token", canvasReadLimiter, handleGetSharedCanvas)
 router.use(verifyToken) // ✅ applies to all routes below
 
 router.post("/", canvasWriteLimiter, checkCanvasLimit, handleCreateCanvas)
-router.put("/:id", canvasWriteLimiter, handleUpdateCanvas)
+router.patch("/:id", canvasWriteLimiter, handleUpdateCanvas)
 router.get("/:id", canvasReadLimiter, handleGetCanvas)
 router.delete("/:id", canvasWriteLimiter, handleDeleteCanvas)
 router.get("/", canvasReadLimiter, handleGetAllCanvases)

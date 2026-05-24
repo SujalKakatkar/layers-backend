@@ -5,46 +5,7 @@ import { User } from "../models/user.model.js"
 import { generateTokens } from "../utils/generateTokens.js"
 import { sendResetEmail } from "../utils/sendResetEmail.js"
 
-export async function signInService({ email, password }) {
-    const user = await User.findOne({ email })
-    const isPasswordCorrect = user && await bcrypt.compare(password, user.password)
 
-    if (!user || !isPasswordCorrect)
-        throw { status: 401, message: "Invalid email or password" }
-
-    const { accessToken, refreshToken } = generateTokens(user._id)
-    user.refreshToken = refreshToken
-    await user.save()
-
-    const userData = {
-        _id: user._id,
-        fullName: user.fullName,
-        email: user.email
-    }
-
-    return { userData, accessToken, refreshToken }
-}
-
-export async function signUpService({ fullName, email, password }) {
-    const existingUser = await User.findOne({ email })
-    if (existingUser)
-        throw { status: 409, message: "Email already exists" }
-
-    const hashedPassword = await bcrypt.hash(password, 10)
-    const user = await User.create({ fullName, email, password: hashedPassword })
-
-    const { accessToken, refreshToken } = generateTokens(user._id)
-    user.refreshToken = refreshToken
-    await user.save()
-
-    const userData = {
-        _id: user._id,
-        fullName: user.fullName,
-        email: user.email
-    }
-
-    return { userData, accessToken, refreshToken }
-}
 
 export async function forgotPasswordService({ email }) {
     const user = await User.findOne({ email })
