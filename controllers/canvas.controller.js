@@ -29,6 +29,7 @@ export async function handleUpdateCanvas(req, res) {
         })
         return sendResponse(res, 200, "Canvas updated successfully")
     } catch (error) {
+        console.log(error);
         if (error.status) return sendError(res, error.status, error.message)
         return sendError(res, 500, "Something went wrong")
     }
@@ -57,6 +58,8 @@ export async function handleGetCanvas(req, res) {
         })
         return sendResponse(res, 200, canvas, "Canvas fetched successfully")
     } catch (error) {
+        
+        
         if (error.status) return sendError(res, error.status, error.message)
         return sendError(res, 500, "Something went wrong")
     }

@@ -6,8 +6,8 @@ export async function getCanvasService({ userId, id }) {
 
     const canvas = await Canvas.findOne(
         { _id: id },
-    ).lean()
-
+    ).select("-createdAt -updatedAt -elementCount -connectorCount").lean()
+    
     if (!canvas)
         throw { status: 404, message: "Canvas not found" }
 
@@ -16,9 +16,12 @@ export async function getCanvasService({ userId, id }) {
 
     // Fetch elements and connectors in parallel
     const [elements, connectors] = await Promise.all([
-        Element.find({ canvasId: id }).lean(),
-        Connector.find({ canvasId: id }).lean(),
+        Element.find({ canvasId: id }).select("-canvasId -createdAt -updatedAt").lean(),
+        Connector.find({ canvasId: id }).select("-canvasId -createdAt -updatedAt").lean(),
     ])
+    console.log(elements);
+    
+    
 
 
     return {

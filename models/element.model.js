@@ -31,7 +31,7 @@ const ElementSchema = new Schema(
         color: { type: String, default: undefined },
         rotation: { type: Number, default: 0 },
     },
-    { timestamps: true, versionKey: false }
+    { timestamps: true, versionKey: false, _id: false }
 )
 
 ElementSchema.index({ canvasId: 1 })

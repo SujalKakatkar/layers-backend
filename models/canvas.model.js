@@ -11,11 +11,6 @@ const CanvasSchema = new Schema(
             offset: { x: { type: Number, default: 0 }, y: { type: Number, default: 0 } },
         },
         generatedGroupOffset: { x: Number, y: Number },
-        layout: {
-            type: Map,
-            of: new Schema({ x: Number, y: Number }, { _id: false }),
-            default: () => new Map(),
-        },
 
         elementCount: { type: Number, default: 0, min: 0 },
         connectorCount: { type: Number, default: 0, min: 0 },

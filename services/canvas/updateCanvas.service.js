@@ -5,7 +5,6 @@ import { Element } from "../../models/element.model.js";
 import { Connector } from "../../models/connector.model.js";
 
 export async function updateCanvasService({ userId, id, payload }) {
-
     if (!mongoose.Types.ObjectId.isValid(id))
         throw { status: 400, message: "Invalid canvas id" }
 
@@ -30,30 +29,21 @@ export async function updateCanvasService({ userId, id, payload }) {
         layout,
     } = payload
     
-    
-
     const $set = {}
     if (title !== undefined) $set.title = title
     if (code !== undefined) $set.code = code
     if (camera !== undefined) $set.camera = camera
     if (generatedGroupOffset !== undefined) $set.generatedGroupOffset = generatedGroupOffset
-    if (layout !== undefined) $set.layout = layout
-
     if (Array.isArray(manualElements)) $set.elementCount = manualElements.length
     if (Array.isArray(manualConnectors)) $set.connectorCount = manualConnectors.length
 
     const ops = []
-
    
     if (Object.keys($set).length > 0)
         ops.push(
             Canvas.updateOne({ _id: id }, { $set })
         )
-
-
     if (Array.isArray(manualElements)) {
-      
-        
         $set.elementCount = manualElements.length
         const docs = manualElements.map(el => ({ canvasId: id, ...el }))
         ops.push(
@@ -71,7 +61,6 @@ export async function updateCanvasService({ userId, id, payload }) {
         )
     }
 
-  
     await Promise.all(ops)
     return { success: true }
 }
