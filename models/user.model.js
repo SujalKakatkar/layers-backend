@@ -20,8 +20,13 @@ const UserSchema = mongoose.Schema(
 
         password: {
             type: String,
-            required: [true, "Password is required"],
+            required: false,
             select: false, 
+        },
+
+        googleId: {
+            type: String,         
+            default: undefined,
         },
 
         refreshToken: {

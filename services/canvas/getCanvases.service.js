@@ -19,10 +19,6 @@ export async function getCanvasService({ userId, id }) {
         Element.find({ canvasId: id }).select("-canvasId -createdAt -updatedAt").lean(),
         Connector.find({ canvasId: id }).select("-canvasId -createdAt -updatedAt").lean(),
     ])
-    console.log(elements);
-    
-    
-
 
     return {
         ...canvas,

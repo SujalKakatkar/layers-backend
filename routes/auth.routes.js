@@ -8,6 +8,8 @@ import {
     handleResetPassword,
     handleSignUp,
     handleSignIn,
+    handleGoogleLogin,
+    handleGoogleCallback,
 } from '../controllers/auth.controller.js'
 import { verifyToken } from '../middlewares/auth.middleware.js'
 const router = express.Router()
@@ -29,5 +31,10 @@ router.post("/logout", handleLogOut)
 router.post("/refresh-token", handleRefreshToken)
 //get user
 router.get("/me", verifyToken, handleGetMe)
+
+
+// ── Google OAuth ──────────────────────────────────────────────
+router.get("/google", handleGoogleLogin)
+router.get("/google/callback", handleGoogleCallback)
 
 export default router

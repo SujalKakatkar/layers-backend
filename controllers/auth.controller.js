@@ -7,12 +7,55 @@ import { resetPasswordService } from "../services/auth/resetPassword.service.js"
 import { signOutService } from "../services/auth/logOut.service.js"
 import { refreshTokenService } from "../services/auth/refreshToken.service.js"
 import { getMeService } from "../services/auth/getMe.service.js"
+import { generateAccessToken, generateRefreshToken } from "../utils/generateTokens.js"
+import passport from 'passport'
 
+//todo : change the cookie options in the production 
 const cookieOptions = {
     httpOnly: true,
     secure: false,
     sameSite: "lax"
 }
+
+export const handleGoogleLogin = passport.authenticate('google', {
+    scope: ['profile', 'email'],
+    session: false
+})
+
+// Step 2 — Google calls back here
+export const handleGoogleCallback = [
+    passport.authenticate('google', { session: false, failureRedirect: '/login' }),
+
+    async (req, res) => {
+        try {
+            const user = req.user          // MongoDB doc from Passport strategy
+
+            const accessToken = generateAccessToken(user)
+            const refreshToken = generateRefreshToken(user)
+
+            // Save refreshToken to DB — same as your handleSignIn
+            user.refreshToken = refreshToken
+            await user.save()
+
+            // Same cookie setup as your handleSignIn
+            res.cookie('refreshToken', refreshToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+                maxAge: 7 * 24 * 60 * 60 * 1000     // 7 days
+            })
+
+            // Redirect to frontend with accessToken in URL
+            // Frontend grabs it and stores in memory/state
+            res.redirect(
+                `${process.env.CLIENT_URL}/dashboard`
+            )
+
+        } catch (err) {
+            res.redirect(`${process.env.CLIENT_URL}/auth/error`)
+        }
+    }
+]
 
 export async function handleSignIn(req, res) {
     try {
