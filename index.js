@@ -16,7 +16,7 @@ const app = express()
 
 const allowedOrigins = [
     "http://localhost:5173",
-    process.env.CLIENT_URL
+    "https://layers-henna.vercel.app"
 ]
 
 // middlewares
