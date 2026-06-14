@@ -14,9 +14,12 @@ import './config/passport.js'
 const app = express()
 
 
+console.log(process.env.CLIENT_URL);
+
+
 const allowedOrigins = [
     "http://localhost:5173",
-    process.env.CLIENT_URL
+    "https://layers-henna.vercel.app"
 ]
 
 // middlewares
