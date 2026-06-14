@@ -10,7 +10,7 @@ import { getMeService } from "../services/auth/getMe.service.js"
 import { generateAccessToken, generateRefreshToken } from "../utils/generateTokens.js"
 import passport from 'passport'
 
-//todo : change the cookie options in the production 
+
 const cookieOptions = {
     httpOnly: true,
     secure: true,

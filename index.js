@@ -40,6 +40,15 @@ app.use(express.json())
 app.use(cookieParser())
 app.use(morgan("dev"))
 
+app.use("/auth", (req, res, next) => {
+    res.set({
+        "Cache-Control": "no-store",
+        "Pragma": "no-cache",
+        "Expires": "0"
+    });
+    next();
+});
+
 // routes
 app.use("/auth", useAuthRoutes)
 app.use("/canvas", useCanvasRouter)
