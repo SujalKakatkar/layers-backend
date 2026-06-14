@@ -13,9 +13,9 @@ import passport from 'passport'
 //todo : change the cookie options in the production 
 const cookieOptions = {
     httpOnly: true,
-    secure: false,
-    sameSite: "lax"
-}
+    secure: true,
+    sameSite: "none",
+};
 
 export const handleGoogleLogin = passport.authenticate('google', {
     scope: ['profile', 'email'],
