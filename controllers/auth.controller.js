@@ -13,8 +13,9 @@ import passport from 'passport'
 
 const cookieOptions = {
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === "production",
     sameSite: "none",
+    path: "/",
 };
 
 export const handleGoogleLogin = passport.authenticate('google', {
@@ -41,8 +42,15 @@ export const handleGoogleCallback = [
             res.cookie('refreshToken', refreshToken, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict',
+                sameSite: 'lax',
                 maxAge: 7 * 24 * 60 * 60 * 1000     // 7 days
+            })
+
+            res.cookie('accessToken', accessToken, {
+                httpOnly: true,               // MUST
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',              // IMPORTANT for OAuth redirects
+                maxAge: 15 * 60 * 1000       // 15 min
             })
 
             // Redirect to frontend with accessToken in URL
