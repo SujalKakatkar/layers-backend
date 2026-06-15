@@ -151,8 +151,8 @@ export async function handleLogOut(req, res) {
             return sendError(res, 401, "Invalid refresh token")
     }
 
-    res.clearCookie("accessToken")
-    res.clearCookie("refreshToken")
+    res.clearCookie("accessToken",cookieOptions)
+    res.clearCookie("refreshToken",cookieOptions)
 
     return sendResponse(res, 200, null, "User logged out successfully")
 }
