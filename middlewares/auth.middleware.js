@@ -6,6 +6,8 @@ export function verifyToken(req, res, next) {
     try {
         
         const token = req.cookies.accessToken;
+        console.log(req.cookies);
+        
 
         if (!token) {
             return sendError(res, 401, null, "Unauthorized, no token found")
