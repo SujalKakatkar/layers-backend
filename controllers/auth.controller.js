@@ -39,19 +39,9 @@ export const handleGoogleCallback = [
             await user.save()
 
             // Same cookie setup as your handleSignIn
-            res.cookie('refreshToken', refreshToken, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'lax',
-                maxAge: 7 * 24 * 60 * 60 * 1000     // 7 days
-            })
+            res.cookie('refreshToken', refreshToken, cookieOptions)
 
-            res.cookie('accessToken', accessToken, {
-                httpOnly: true,               // MUST
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'lax',              // IMPORTANT for OAuth redirects
-                maxAge: 15 * 60 * 1000       // 15 min
-            })
+            res.cookie('accessToken', accessToken, cookieOptions)
 
             // Redirect to frontend with accessToken in URL
             // Frontend grabs it and stores in memory/state
@@ -152,8 +142,8 @@ export async function handleLogOut(req, res) {
         await signOutService({ token })
     } catch (err) {
         // clear cookies regardless of error reason
-        res.clearCookie("accessToken")
-        res.clearCookie("refreshToken")
+        res.clearCookie("accessToken", cookieOptions)
+        res.clearCookie("refreshToken", cookieOptions)
 
         if (err.message === "invalid_token") return res.sendStatus(204)
         if (err.message === "user_not_found") return res.sendStatus(204)
@@ -182,8 +172,8 @@ export async function handleRefreshToken(req, res) {
         return sendResponse(res, 200, null, "Access token refreshed successfully")
 
     } catch (error) {
-        res.clearCookie("accessToken")
-        res.clearCookie("refreshToken")
+        res.clearCookie("accessToken", cookieOptions)
+        res.clearCookie("refreshToken", cookieOptions)
         if (error.status) return sendError(res, error.status, error.message)
         return sendError(res, 500, "Something went wrong")
     }
