@@ -9,21 +9,30 @@ import { refreshTokenService } from "../services/auth/refreshToken.service.js"
 import { getMeService } from "../services/auth/getMe.service.js"
 import { generateAccessToken, generateRefreshToken } from "../utils/generateTokens.js"
 import passport from 'passport'
+const isProd = process.env.NODE_ENV === "production";
 
-
-const cookieOptions = {
+const accessCookieOptions = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "none",
+    secure: isProd,       
+    sameSite: isProd ? "none" : "lax",  
     path: "/",
 };
+
+const refreshCookieOptions = {
+    httpOnly: true,
+    secure: isProd,        
+    sameSite: isProd ? "none" : "lax",   
+    path: "/",             
+};
+
+
 
 export const handleGoogleLogin = passport.authenticate('google', {
     scope: ['profile', 'email'],
     session: false
 })
 
-// Step 2 — Google calls back here
+
 export const handleGoogleCallback = [
     passport.authenticate('google', { session: false, failureRedirect: '/login' }),
 
@@ -39,9 +48,9 @@ export const handleGoogleCallback = [
             await user.save()
 
             // Same cookie setup as your handleSignIn
-            res.cookie('refreshToken', refreshToken, cookieOptions)
+            res.cookie('refreshToken', refreshToken, refreshCookieOptions)
 
-            res.cookie('accessToken', accessToken, cookieOptions)
+            res.cookie('accessToken', accessToken, accessCookieOptions)
 
             // Redirect to frontend with accessToken in URL
             // Frontend grabs it and stores in memory/state
@@ -64,8 +73,8 @@ export async function handleSignIn(req, res) {
 
         const { userData, accessToken, refreshToken } = await signInService({ email, password })
 
-        res.cookie("accessToken", accessToken, cookieOptions)
-            .cookie("refreshToken", refreshToken, cookieOptions)
+        res.cookie("accessToken", accessToken, accessCookieOptions)
+            .cookie("refreshToken", refreshToken, refreshCookieOptions)
 
         return sendResponse(res, 200, userData, "User logged in successfully")
 
@@ -84,8 +93,8 @@ export async function handleSignUp(req, res) {
 
         const { userData, accessToken, refreshToken } = await signUpService({ fullName, email, password })
 
-        res.cookie("accessToken", accessToken, cookieOptions)
-            .cookie("refreshToken", refreshToken, cookieOptions)
+        res.cookie("accessToken", accessToken, accessCookieOptions)
+            .cookie("refreshToken", refreshToken, refreshCookieOptions)
 
         return sendResponse(res, 201, userData, "User created successfully")
 
@@ -142,8 +151,8 @@ export async function handleLogOut(req, res) {
         await signOutService({ token })
     } catch (err) {
         // clear cookies regardless of error reason
-        res.clearCookie("accessToken", cookieOptions)
-        res.clearCookie("refreshToken", cookieOptions)
+        res.clearCookie("accessToken", accessCookieOptions)
+        res.clearCookie("refreshToken", refreshCookieOptions)
 
         if (err.message === "invalid_token") return res.sendStatus(204)
         if (err.message === "user_not_found") return res.sendStatus(204)
@@ -151,8 +160,8 @@ export async function handleLogOut(req, res) {
             return sendError(res, 401, "Invalid refresh token")
     }
 
-    res.clearCookie("accessToken",cookieOptions)
-    res.clearCookie("refreshToken",cookieOptions)
+    res.clearCookie("accessToken",accessCookieOptions)
+    res.clearCookie("refreshToken",refreshCookieOptions)
 
     return sendResponse(res, 200, null, "User logged out successfully")
 }
@@ -166,14 +175,14 @@ export async function handleRefreshToken(req, res) {
     try {
         const { accessToken, refreshToken } = await refreshTokenService({ token })
 
-        res.cookie("accessToken", accessToken, cookieOptions)
-            .cookie("refreshToken", refreshToken, cookieOptions)
+        res.cookie("accessToken", accessToken, accessCookieOptions)
+            .cookie("refreshToken", refreshToken, refreshCookieOptions)
 
         return sendResponse(res, 200, null, "Access token refreshed successfully")
 
     } catch (error) {
-        res.clearCookie("accessToken", cookieOptions)
-        res.clearCookie("refreshToken", cookieOptions)
+        res.clearCookie("accessToken", accessCookieOptions)
+        res.clearCookie("refreshToken", refreshCookieOptions)
         if (error.status) return sendError(res, error.status, error.message)
         return sendError(res, 500, "Something went wrong")
     }
